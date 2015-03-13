@@ -4,6 +4,7 @@
       Water: "Water",
       Brick: "Brick",
       Erase: "Erase",
+      Tap: "Tap",
   }
   var Dust = (function() {
       // Constant properties 
@@ -37,13 +38,9 @@
           var x = Math.min(Math.round(mousePos.x / 5), 99);
           var y = Math.min(Math.round(mousePos.y / 5), 99);
           if (Selection == Type.Erase) {
-              var i = particles.indexOf(Grid[x][y]);
-              if (i > -1) particles.splice(i, 1);
-              Grid[x][y] = 0;
+              if (Grid[x][y] != 0) Grid[x][y].remove();
           } else if (Grid[x][y] == 0) {
-              var tempptc = new ptc(x, y, Selection) //, color += .2, 360, 50);
-              Grid[x][y] = tempptc;
-              particles.push(tempptc);
+              Grid[x][y] = new ptc(x, y, Selection) //, color += .2, 360, 50);
           }
       }, false);
       canvas.onmousedown = function(e) {
@@ -56,17 +53,20 @@
 
       function KeyEvent(keyCode) {
           switch (keyCode) {
-              case 81: //d
+              case 81: //q
                   Selection = Type.Dust;
                   break;
-              case 87: //s
+              case 87: //w
                   Selection = Type.Water;
                   break;
-              case 82: //a
+              case 82: //r
                   Selection = Type.Brick;
                   break;
-              case 69: //w
+              case 69: //e
                   Selection = Type.Erase;
+                  break;
+              case 84: //e
+                  Selection = Type.Tap;
                   break;
           }
       }
@@ -97,11 +97,24 @@
                   s = 77;
                   l = 30;
                   break;
+              case Type.Tap: //d
+                  h = 12;
+                  s = 60;
+                  l = 99;
+                  break;
           }
           this.color = husl.p.toRGB(h, s, l);
+          particles.push(this);
       };
       ptc.prototype = {
+          remove: function() {
+              var i = particles.indexOf(this);
+              if (i > -1) particles.splice(i, 1);
+              Grid[this.x][this.y] = 0;
+          },
           tick: function(dir) {
+              var dy = 0;
+              var dx = 0;
               switch (this.type) {
                   case Type.Dust: //d
                       dx = 0;
@@ -116,16 +129,25 @@
                       dx = 0;
                       dy = 0;
                       break;
+                  case Type.Tap: //d
+                      dx = 0;
+                      dy = 0;
+                      this.Tap();
+                      return;
+                      break;
               }
-              if ((this.x + dx) < 0 || (this.x + dx) > 99) dx = 0;
-              if ((this.y + dy) < 0 || (this.y + dy) > 98) dy = 0;
+              if ((this.x + dx) < 0 || ((this.x + dx) > 99)) {
+                  this.remove();
+                  return;
+              }
+              if ((this.y + dy) < 0 || ((this.y + dy) > 99)) dy = 0;
               if (Grid[this.x][this.y + dy] == 0) {
                   Grid[this.x][this.y + dy] = this;
                   Grid[this.x][this.y] = 0;
                   this.y += dy;
               }
-              // console.log(this.y +dy, this.y);
-              if (this.type == Type.Dust && Grid[this.x][this.y + dy].type == Type.Water) {
+              // console.log(this.y + dy, this.y);
+              if (this.type == Type.Dust && (this.y + dy < 100) && Grid[this.x][this.y + dy].type == Type.Water) {
                   temp = Grid[this.x][this.y + dy];
                   Grid[this.x][this.y + dy] = this;
                   Grid[this.x][this.y] = temp;
@@ -137,31 +159,28 @@
                   Grid[this.x][this.y] = 0;
                   this.x += dx;
               }
-              // if (Grid[this.x + dx][this.y + dy] == 0) {
-              //     Grid[this.x + dx][this.y + dy] = this;
-              //     Grid[this.x][this.y] = 0;
-              //     this.y += dy;
-              //     this.x += dx;
-              // }
               return;
+          },
+          Tap: function() {
+              if (this.y < 98 &&  Grid[this.x][this.y + 1] ==0) {
+                  Grid[this.x][this.y + 1] = new ptc(this.x, this.y + 1, Type.Water);
+              }
           }
       };
 
       function init() {
-          var x = 50;
+          var x = 50; //deprecated
           var y = 50;
           for (var i = 0; i < 100; i++) { //spawn n fish and add them to list
               x = Math.floor(Math.random() * (width - 60)) + 30;
               y = Math.floor(Math.random() * (height - 60)) + 30;
-              var tempptc = new ptc(x, y, Selection); // Math.random() * 360, 360, 50)
-              Grid[x][y] = tempptc;
-              particles.push(tempptc);
+              Grid[x][y] = new ptc(x, y, Selection); // Math.random() * 360, 360, 50)
           }
           // return;
       }
 
       function Dust(equation, canvas) {
-          init();
+          // init();
           this.canvas = canvas;
           this.scale = 5 //canvas.getAttribute('width') / width;
           this.context = canvas.getContext('2d');
@@ -218,12 +237,11 @@
                   this.drawParticle(particles[i]);
               }
               this.context.putImageData(this.imageData, 0, 0);
-              document.getElementById('SelectionDisplay').innerHTML = 'Selection: '+Selection ;
-      
+              document.getElementById('SelectionDisplay').innerHTML = 'Selection: ' + Selection +' ------------- Particles: ' + particles.length ;
           }
       };
       var requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
-              window.setTimeout(callback, 2000);
+              window.setTimeout(callback, 0);
           };
       return Dust;
   })();
