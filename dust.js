@@ -40,7 +40,7 @@
           if (Selection == Type.Erase) {
               if (Grid[x][y] != 0) Grid[x][y].remove();
           } else if (Grid[x][y] == 0) {
-              Grid[x][y] = new ptc(x, y, Selection) //, color += .2, 360, 50);
+             new ptc(x, y, Selection) //, color += .2, 360, 50);
           }
       }, false);
       canvas.onmousedown = function(e) {
@@ -80,6 +80,7 @@
       function ptc(x, y, type) { //, h, s, l) {
           this.x = x;
           this.y = y;
+          Grid[x][y] = this;
           this.type = type;
           switch (type) {
               case Type.Dust: //d
@@ -162,8 +163,8 @@
               return;
           },
           Tap: function() {
-              if (this.y < 98 &&  Grid[this.x][this.y + 1] ==0) {
-                  Grid[this.x][this.y + 1] = new ptc(this.x, this.y + 1, Type.Water);
+              if (this.y < 98 && Grid[this.x][this.y + 1] == 0) {
+                  new ptc(this.x, this.y + 1, Type.Water);
               }
           }
       };
@@ -174,7 +175,7 @@
           for (var i = 0; i < 100; i++) { //spawn n fish and add them to list
               x = Math.floor(Math.random() * (width - 60)) + 30;
               y = Math.floor(Math.random() * (height - 60)) + 30;
-              Grid[x][y] = new ptc(x, y, Selection); // Math.random() * 360, 360, 50)
+              new ptc(x, y, Selection); // Math.random() * 360, 360, 50)
           }
           // return;
       }
@@ -232,12 +233,10 @@
               this.imageData = this.context.getImageData(0, 0, 500, 500);
               for (var i = 0; i < particles.length; i++) {
                   particles[i].tick();
-                  // }
-                  // for (var i = 0; i < particles.length; i++) {
-                  this.drawParticle(particles[i]);
+                  if (particles[i]) this.drawParticle(particles[i]);
               }
               this.context.putImageData(this.imageData, 0, 0);
-              document.getElementById('SelectionDisplay').innerHTML = 'Selection: ' + Selection +' ------------- Particles: ' + particles.length ;
+              document.getElementById('SelectionDisplay').innerHTML = 'Selection: ' + Selection + ' ------------- Particles: ' + particles.length;
           }
       };
       var requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
