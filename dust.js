@@ -1,4 +1,10 @@
   var husl = HUSL;
+  Type = {
+      Dust: "Dust",
+      Water: "Water",
+      Brick: "Brick",
+      Erase: "Erase",
+  }
   var Dust = (function() {
       // Constant properties 
       var width = 100;
@@ -6,6 +12,7 @@
       var interval = 1000 / (25 /* fps */ );
       var frame = 1;
       var color = 0;
+      var Selection = Type.Dust;
       var particles = [];
       Grid = new Array(100);
       for (var y = 0; y < 100; y++) Grid[y] = new Array(100);
@@ -14,7 +21,6 @@
               Grid[x][y] = 0;
           }
       }
-      // window.addEventListener("keydown", onKeyDown, false);
       var mouseIsDown = false;
       var canvas = document.getElementById('display');
 
@@ -30,10 +36,12 @@
           var mousePos = getMousePos(canvas, evt);
           var x = Math.min(Math.round(mousePos.x / 5), 99);
           var y = Math.min(Math.round(mousePos.y / 5), 99);
-          // var message = 'Mouse position: ' + x + ',' + y;
-          // console.log(message);s
-          if (Grid[x][y] == 0) {
-              var tempptc = new ptc(x, y, color += .2, 360, 50);
+          if (Selection == Type.Erase) {
+              var i = particles.indexOf(Grid[x][y]);
+              if (i > -1) particles.splice(i, 1);
+              Grid[x][y] = 0;
+          } else if (Grid[x][y] == 0) {
+              var tempptc = new ptc(x, y, Selection) //, color += .2, 360, 50);
               Grid[x][y] = tempptc;
               particles.push(tempptc);
           }
@@ -44,20 +52,97 @@
       canvas.onmouseup = function(e) {
           mouseIsDown = false;
       }
+      window.addEventListener("keydown", onKeyDown, false);
 
-      function ptc(x, y, h, s, l) {
+      function KeyEvent(keyCode) {
+          switch (keyCode) {
+              case 81: //d
+                  Selection = Type.Dust;
+                  break;
+              case 87: //s
+                  Selection = Type.Water;
+                  break;
+              case 82: //a
+                  Selection = Type.Brick;
+                  break;
+              case 69: //w
+                  Selection = Type.Erase;
+                  break;
+          }
+      }
+
+      function onKeyDown(event) {
+          var keyCode = event.keyCode;
+          console.log(keyCode);
+          KeyEvent(keyCode);
+      }
+
+      function ptc(x, y, type) { //, h, s, l) {
           this.x = x;
           this.y = y;
+          this.type = type;
+          switch (type) {
+              case Type.Dust: //d
+                  h = color += .2;
+                  s = 360;
+                  l = 50;
+                  break;
+              case Type.Water: //d
+                  h = 205;
+                  s = 360;
+                  l = 100;
+                  break;
+              case Type.Brick: //d
+                  h = 12;
+                  s = 77;
+                  l = 30;
+                  break;
+          }
           this.color = husl.p.toRGB(h, s, l);
       };
       ptc.prototype = {
           tick: function(dir) {
-              if (Grid[this.x][this.y + 1] == 0) {
-                  // console.log(this);
-                  Grid[this.x][this.y + 1] = this;
-                  Grid[this.x][this.y] = 0;
-                  this.y += 1;
+              switch (this.type) {
+                  case Type.Dust: //d
+                      dx = 0;
+                      dy = 1;
+                      break;
+                  case Type.Water: //d
+                      dx = (Math.random() > .5 ? -1 : 1);
+                      dy = 1; //(Math.random() > .5 ? 0 : 1);;
+                      this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 40) + 20));
+                      break;
+                  case Type.Brick: //d
+                      dx = 0;
+                      dy = 0;
+                      break;
               }
+              if ((this.x + dx) < 0 || (this.x + dx) > 99) dx = 0;
+              if ((this.y + dy) < 0 || (this.y + dy) > 98) dy = 0;
+              if (Grid[this.x][this.y + dy] == 0) {
+                  Grid[this.x][this.y + dy] = this;
+                  Grid[this.x][this.y] = 0;
+                  this.y += dy;
+              }
+              // console.log(this.y +dy, this.y);
+              if (this.type == Type.Dust && Grid[this.x][this.y + dy].type == Type.Water) {
+                  temp = Grid[this.x][this.y + dy];
+                  Grid[this.x][this.y + dy] = this;
+                  Grid[this.x][this.y] = temp;
+                  temp.y -= dy;
+                  this.y += dy;
+              }
+              if (Grid[this.x + dx][this.y] == 0) {
+                  Grid[this.x + dx][this.y] = this;
+                  Grid[this.x][this.y] = 0;
+                  this.x += dx;
+              }
+              // if (Grid[this.x + dx][this.y + dy] == 0) {
+              //     Grid[this.x + dx][this.y + dy] = this;
+              //     Grid[this.x][this.y] = 0;
+              //     this.y += dy;
+              //     this.x += dx;
+              // }
               return;
           }
       };
@@ -68,7 +153,7 @@
           for (var i = 0; i < 100; i++) { //spawn n fish and add them to list
               x = Math.floor(Math.random() * (width - 60)) + 30;
               y = Math.floor(Math.random() * (height - 60)) + 30;
-              var tempptc = new ptc(x, y, Math.random() * 360, 360, 50)
+              var tempptc = new ptc(x, y, Selection); // Math.random() * 360, 360, 50)
               Grid[x][y] = tempptc;
               particles.push(tempptc);
           }
@@ -128,11 +213,13 @@
               this.imageData = this.context.getImageData(0, 0, 500, 500);
               for (var i = 0; i < particles.length; i++) {
                   particles[i].tick();
-              // }
-              // for (var i = 0; i < particles.length; i++) {
+                  // }
+                  // for (var i = 0; i < particles.length; i++) {
                   this.drawParticle(particles[i]);
               }
               this.context.putImageData(this.imageData, 0, 0);
+              document.getElementById('SelectionDisplay').innerHTML = 'Selection: '+Selection ;
+      
           }
       };
       var requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
