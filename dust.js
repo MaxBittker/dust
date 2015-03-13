@@ -216,9 +216,14 @@
               var R = Math.floor(color[0] * 255); // (color & 0xff0000) >>> 16;
               var G = Math.floor(color[1] * 255); //(color & 0x00ff00) >>> 8;
               var B = Math.floor(color[2] * 255); // (color & 0x0000ff) >>> 0;
-              for (var sx = 0; sx < 5; sx++) {
-                  for (var sy = 0; sy < 5; sy++) {
-                      var i = (((y * this.scale + (sy - 1)) * width * this.scale) + (x * this.scale + (sx - 1))) * 4;
+              var Size = 0;
+              // if(ptc.type==Type.Water && x>0 && x<98)
+              //  Size = Math.floor(Math.random()*2);
+           
+
+              for (var sx = -Size; sx < 5+Size; sx++) {
+                  for (var sy = -Size; sy < 5+Size; sy++) {
+                      var i = (((y * this.scale + (sy)) * width * this.scale) + (x * this.scale + (sx))) * 4;
                       this.imageData.data[i] = R % 255;
                       this.imageData.data[i + 1] = G % 255;
                       this.imageData.data[i + 2] = B % 255;
