@@ -27,6 +27,12 @@
               Grid[x][y] = 0;
           }
       }
+      var Adjacent = [
+          [0, 1],
+          [-1, 0],
+          [1, 0],
+          [0, -1]
+      ];
       var PortField;
       var mouseIsDown = false;
       var canvas = document.getElementById('display');
@@ -260,8 +266,8 @@
               }
               if ((this.y + dy) > 99) dy = 0;
               if (this.Move(0, dy) && (this.type === Type.Water || this.type === Type.Fire) && Math.random() > .2) dx = 0; // water spread
-              if (!this.Move(dx, 0)) this.Move(-dx, 0);//fix this later
-              if (this.type === Type.Dust && (this.y + dy < 100)&& (this.y + dy > 0) && Grid[this.x][this.y + dy].type === Type.Water) {
+              if (!this.Move(dx, 0)) this.Move(-dx, 0); //fix this later
+              if (this.type === Type.Dust && (this.y + dy < 100) && (this.y + dy > 0) && Grid[this.x][this.y + dy].type === Type.Water) {
                   temp = Grid[this.x][this.y + dy];
                   Grid[this.x][this.y + dy] = this;
                   Grid[this.x][this.y] = temp;
@@ -297,14 +303,11 @@
           },
           Tap: function() {
               if (this.SpawnType === Type.Tap) {
-                  adj = Grid[this.x][this.y + 1];
-                  if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
-                  adj = Grid[this.x][this.y - 1];
-                  if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
-                  adj = Grid[this.x + 1][this.y];
-                  if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
-                  adj = Grid[this.x - 1][this.y];
-                  if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
+                  for (var i = 0; i < 4; i++) {
+                    if (0 > this.x+Adjacent[i][0] || this.x+Adjacent[i][0] > 99 || 0 > this.y+Adjacent[i][1] || this.y+Adjacent[i][1] > 99)  continue;
+                      adj = Grid[this.x + Adjacent[i][0]][this.y + Adjacent[i][1]];
+                      if (adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
+                  }
               } else {
                   if (Math.random() < .6) return;
                   if (this.y < 98 && Grid[this.x][this.y + 1] === 0) new ptc(this.x, this.y + 1, this.SpawnType);
@@ -314,7 +317,12 @@
               }
           }
       };
-
+      // adj = Grid[this.x][this.y - 1];
+      // if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
+      // adj = Grid[this.x + 1][this.y];
+      // if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
+      // adj = Grid[this.x - 1][this.y];
+      // if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
       function init() {
           // for (var x = 0; x < 100; x++) {
           //     for (var y = 0; y < 100; y++) { //spawn n fish and add them to list
