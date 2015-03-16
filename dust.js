@@ -1,21 +1,23 @@
   var husl = HUSL;
-  Type = {
-      Dust: "Dust",
-      Water: "Water",
-      Brick: "Brick",
-      Erase: "Erase",
-      Tap: "Tap",
-  }
   var Dust = (function() {
       // Constant properties 
+      var Type = {
+          Dust: "Dust",
+          Water: "Water",
+          Brick: "Brick",
+          Erase: "Erase",
+          Tap: "Tap",
+      };
       var width = 100;
       var height = 100;
       var interval = 1000 / (25 /* fps */ );
       var frame = 1;
       var color = 0;
       var Selection = Type.Dust;
+      var MouseX = 0;
+      var MouseY = 0;
       var particles = [];
-      Grid = new Array(100);
+      var Grid = new Array(100);
       for (var y = 0; y < 100; y++) Grid[y] = new Array(100);
       for (var x = 0; x < 100; x++) {
           for (var y = 0; y < 100; y++) {
@@ -24,7 +26,7 @@
       }
       var mouseIsDown = false;
       var canvas = document.getElementById('display');
-
+      // canvas.style.cursor = "none";
       function getMousePos(canvas, evt) {
           var rect = canvas.getBoundingClientRect();
           return {
@@ -33,15 +35,9 @@
           };
       }
       canvas.addEventListener('mousemove', function(evt) {
-          if (!mouseIsDown) return;
           var mousePos = getMousePos(canvas, evt);
-          var x = Math.min(Math.round(mousePos.x / 5), 99);
-          var y = Math.min(Math.round(mousePos.y / 5), 99);
-          if (Selection == Type.Erase) {
-              if (Grid[x][y] != 0) Grid[x][y].remove();
-          } else if (Grid[x][y] == 0) {
-             new ptc(x, y, Selection) //, color += .2, 360, 50);
-          }
+          MouseX = Math.min(Math.round(mousePos.x / 5), 99);
+          MouseY = Math.min(Math.round(mousePos.y / 5), 99);
       }, false);
       canvas.onmousedown = function(e) {
           mouseIsDown = true;
@@ -73,7 +69,7 @@
 
       function onKeyDown(event) {
           var keyCode = event.keyCode;
-          console.log(keyCode);
+          // console.log(keyCode);
           KeyEvent(keyCode);
       }
 
@@ -85,6 +81,7 @@
           switch (type) {
               case Type.Dust: //d
                   h = color += .2;
+                  console.log(h);
                   s = 360;
                   l = 50;
                   break;
@@ -104,7 +101,7 @@
                   l = 99;
                   break;
           }
-          this.color = husl.p.toRGB(h, s, l);
+          this.color = husl.p.toRGB(Math.round(h), s, l);
           particles.push(this);
       };
       ptc.prototype = {
@@ -122,13 +119,14 @@
                       dy = 1;
                       break;
                   case Type.Water: //d
-                      dx = (Math.random() > .5 ? -1 : 1);
+                      dx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
                       dy = 1; //(Math.random() > .5 ? 0 : 1);;
                       this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 40) + 20));
                       break;
                   case Type.Brick: //d
                       dx = 0;
                       dy = 0;
+                      return;
                       break;
                   case Type.Tap: //d
                       dx = 0;
@@ -142,12 +140,8 @@
                   return;
               }
               if ((this.y + dy) < 0 || ((this.y + dy) > 99)) dy = 0;
-              if (Grid[this.x][this.y + dy] == 0) {
-                  Grid[this.x][this.y + dy] = this;
-                  Grid[this.x][this.y] = 0;
-                  this.y += dy;
-              }
-              // console.log(this.y + dy, this.y);
+              if (this.Move(0, dy) && this.type == Type.Water && Math.random() > .2) dx = 0; // water spread
+              if (!this.Move(dx, 0)) this.Move(-dx, 0);
               if (this.type == Type.Dust && (this.y + dy < 100) && Grid[this.x][this.y + dy].type == Type.Water) {
                   temp = Grid[this.x][this.y + dy];
                   Grid[this.x][this.y + dy] = this;
@@ -155,17 +149,28 @@
                   temp.y -= dy;
                   this.y += dy;
               }
-              if (Grid[this.x + dx][this.y] == 0) {
-                  Grid[this.x + dx][this.y] = this;
-                  Grid[this.x][this.y] = 0;
-                  this.x += dx;
-              }
               return;
           },
-          Tap: function() {
-              if (this.y < 98 && Grid[this.x][this.y + 1] == 0) {
-                  new ptc(this.x, this.y + 1, Type.Water);
+          Move: function(dx, dy) {
+              if ((this.x + dx) < 0 || ((this.x + dx) > 99)) {
+                  this.remove();
+                  return (1);
               }
+              if (Grid[this.x + dx][this.y + dy] == 0) {
+                  Grid[this.x + dx][this.y + dy] = this;
+                  Grid[this.x][this.y] = 0;
+                  this.x += dx;
+                  this.y += dy;
+                  return (1);
+              }
+              return (0);
+          },
+          Tap: function() {
+              if (Math.random() < .6) return;
+              if (this.y < 98 && Grid[this.x][this.y + 1] == 0) new ptc(this.x, this.y + 1, Type.Water);
+              else if (this.x < 98 && Grid[this.x + 1][this.y] == 0) new ptc(this.x + 1, this.y, Type.Water);
+              else if (this.x > 1 && Grid[this.x - 1][this.y] == 0) new ptc(this.x - 1, this.y, Type.Water);
+              else if (this.y > 1 && Grid[this.x][this.y - 1] == 0) new ptc(this.x, this.y - 1, Type.Water);
           }
       };
 
@@ -219,14 +224,12 @@
               var Size = 0;
               // if(ptc.type==Type.Water && x>0 && x<98)
               //  Size = Math.floor(Math.random()*2);
-           
-
-              for (var sx = -Size; sx < 5+Size; sx++) {
-                  for (var sy = -Size; sy < 5+Size; sy++) {
+              for (var sx = -Size; sx < 5 + Size; sx++) {
+                  for (var sy = -Size; sy < 5 + Size; sy++) {
                       var i = (((y * this.scale + (sy)) * width * this.scale) + (x * this.scale + (sx))) * 4;
-                      this.imageData.data[i] = R % 255;
-                      this.imageData.data[i + 1] = G % 255;
-                      this.imageData.data[i + 2] = B % 255;
+                      this.imageData.data[i] = R;// % 255;
+                      this.imageData.data[i + 1] = G;// % 255;
+                      this.imageData.data[i + 2] = B;// % 255;
                       this.imageData.data[i + 3] = 255;
                   }
               }
@@ -235,6 +238,11 @@
               this.context.fillRect(0, 0, 500, 500);
               this.context.fillStyle = husl.p.toHex(40, 60, 2); ////t'#0010'+offset.toString(16);
               this.context.fill();
+              if (mouseIsDown) {
+                  if (Selection == Type.Erase) {
+                      if (Grid[MouseX][MouseY] != 0) Grid[MouseX][MouseY].remove();
+                  } else if (Grid[MouseX][MouseY] == 0) new ptc(MouseX, MouseY, Selection);
+              }
               this.imageData = this.context.getImageData(0, 0, 500, 500);
               for (var i = 0; i < particles.length; i++) {
                   particles[i].tick();
