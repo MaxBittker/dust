@@ -258,10 +258,10 @@
                   this.remove();
                   return;
               }
-              if ((this.y + dy) < 0 || ((this.y + dy) > 99)) dy = 0;
+              if ((this.y + dy) > 99) dy = 0;
               if (this.Move(0, dy) && (this.type == Type.Water || this.type == Type.Fire) && Math.random() > .2) dx = 0; // water spread
-              if (!this.Move(dx, 0)) this.Move(-dx, 0);
-              if (this.type == Type.Dust && (this.y + dy < 100) && Grid[this.x][this.y + dy].type == Type.Water) {
+              if (!this.Move(dx, 0)) this.Move(-dx, 0);//fix this later
+              if (this.type == Type.Dust && (this.y + dy < 100)&& (this.y + dy > 0) && Grid[this.x][this.y + dy].type == Type.Water) {
                   temp = Grid[this.x][this.y + dy];
                   Grid[this.x][this.y + dy] = this;
                   Grid[this.x][this.y] = temp;
