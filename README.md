@@ -1,4 +1,8 @@
 # dust
+
+"Imagine the cool phenomenon when the wind blows the falling leaves.
+This game simulates the phenomenon with powder (dots)!" -DAN-BALL
+
 HTML5 Powder Game
 
 Inspired by Burning Sand, Powder Toy, and Powder Game
