@@ -8,6 +8,8 @@
           Erase: "Erase",
           Tap: "Tap",
           Air: "Air",
+          Fire: "Fire",
+          Glitch: "Glitch"
       };
       var width = 100;
       var height = 100;
@@ -51,7 +53,7 @@
                   var x = (((omx + dx * (i / length)) / displaySize) * field.width()) | 0
                   var y = (((omy + dy * (i / length)) / displaySize) * field.height()) | 0;
                   field.setVelocity(x, y, dx, dy);
-                  field.setDensity(x, y, 100);
+                  field.setDensity(x, y, 50);
               }
               omx = mx;
               omy = my;
@@ -137,18 +139,24 @@
               case 69: //e
                   Selection = Type.Erase;
                   break;
-              case 84: //e
+              case 84: //t
                   Selection = Type.Tap;
                   break;
               case 65: //a
                   Selection = Type.Air;
+                  break;
+              case 70: //f
+                  Selection = Type.Fire;
+                  break;
+              case 71: //g
+                  Selection = Type.Glitch;
                   break;
           }
       }
 
       function onKeyDown(event) {
           var keyCode = event.keyCode;
-          // console.log(keyCode);
+          console.log(keyCode);
           KeyEvent(keyCode);
       }
 
@@ -158,6 +166,7 @@
           this.y = y;
           Grid[x][y] = this;
           this.type = type;
+          this.SpawnType = type;
           switch (type) {
               case Type.Dust: //d
                   h = color += .2;
@@ -182,6 +191,17 @@
                   s = 60;
                   l = 99;
                   d = 0;
+              case Type.Fire: //d
+                  h = 10;
+                  s = 360;
+                  l = 99;
+                  d = 40;
+                  break;
+              case Type.Glitch: //d
+                  h = Math.random() * 360 | 0;
+                  s = 100;
+                  l = Math.random() * 100 | 0;
+                  d = 0;
                   break;
           }
           this.D = d;
@@ -194,43 +214,52 @@
               if (i > -1) particles.splice(i, 1);
               Grid[this.x][this.y] = 0;
           },
+          wind: function(dx, dy) {
+              dx = Math.round((.7 * dx) + Math.random() * this.D * PortField.getXVelocity(this.x, this.y));
+              dy = Math.round((.7 * dy) + Math.random() * this.D * PortField.getYVelocity(this.x, this.y));
+              if (dx != 0) dx = (dx / Math.abs(dx)) | 0;
+              if (dy != 0) dy = (dy / Math.abs(dy)) | 0;
+              return ([dx, dy]);
+          },
           tick: function(dir) {
               var dy = 0;
               var dx = 0;
+              var delta = [0, 0];
               switch (this.type) {
                   case Type.Dust: //d
-                      dx = Math.round(Math.random() * this.D * PortField.getXVelocity(this.x, this.y));
-                      dy = Math.round(.7 + Math.random() * this.D * PortField.getYVelocity(this.x, this.y));
-                      if (dx != 0) dx = (dx / Math.abs(dx)) | 0;
-                      if (dy != 0) dy = (dy / Math.abs(dy)) | 0;
-                      // console.log(dx);
+                      delta = this.wind(0, 1);
                       break;
                   case Type.Water: //d
-                      tdx = .7 * Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
-                      dx = Math.round(tdx + Math.random() * this.D * PortField.getXVelocity(this.x, this.y));
-                      dy = Math.round(.7 + Math.random() * this.D * PortField.getYVelocity(this.x, this.y));
-                      if (dx != 0) dx = (dx / Math.abs(dx)) | 0;
-                      if (dy != 0) dy = (dy / Math.abs(dy)) | 0;
-                      this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 40) + 20));
+                      tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
+                      delta = this.wind(tdx, 1);
+                      this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 40) + 30));
                       break;
                   case Type.Brick: //d
-                      dx = 0;
-                      dy = 0;
                       return;
                       break;
                   case Type.Tap: //d
-                      dx = 0;
-                      dy = 0;
                       this.Tap();
                       return;
                       break;
+                  case Type.Glitch: //d
+                      this.Glitch();
+                      return;
+                      break;
+                  case Type.Fire: //d
+                      tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
+                      delta = this.wind(0, 0);
+                      this.color = husl.p.toRGB(Math.floor(Math.random() * 20) + 10, 360, Math.floor((Math.random() * 40) + 40));
+                      this.Burn();
+                      break;
               }
-              if ((this.x + dx) < 0 || ((this.x + dx) > 99)) {
+              dx = delta[0];
+              dy = delta[1];
+              if ((this.x + dx) < 0 || (this.x + dx) > 99 || this.y + dy < 0) {
                   this.remove();
                   return;
               }
               if ((this.y + dy) < 0 || ((this.y + dy) > 99)) dy = 0;
-              if (this.Move(0, dy) && this.type == Type.Water && Math.random() > .2) dx = 0; // water spread
+              if (this.Move(0, dy) && (this.type == Type.Water || this.type == Type.Fire) && Math.random() > .2) dx = 0; // water spread
               if (!this.Move(dx, 0)) this.Move(-dx, 0);
               if (this.type == Type.Dust && (this.y + dy < 100) && Grid[this.x][this.y + dy].type == Type.Water) {
                   temp = Grid[this.x][this.y + dy];
@@ -255,12 +284,34 @@
               }
               return (0);
           },
+          Burn: function() {
+              PortField.setDensity(this.x, this.y, 90);
+              PortField.setVelocity(this.x, this.y, 0, -.5);
+          },
+          Glitch: function() {
+              if (Math.random() < .9) return;
+              if (this.y < 98 && Grid[this.x][this.y + 1] == 0) new ptc(this.x, this.y + 1, Selection);
+              else if (this.x < 98 && Grid[this.x + 1][this.y] == 0) new ptc(this.x + 1, this.y, Selection);
+              else if (this.x > 1 && Grid[this.x - 1][this.y] == 0) new ptc(this.x - 1, this.y, Selection);
+              else if (this.y > 1 && Grid[this.x][this.y - 1] == 0) new ptc(this.x, this.y - 1, Selection);
+          },
           Tap: function() {
-              if (Math.random() < .6) return;
-              if (this.y < 98 && Grid[this.x][this.y + 1] == 0) new ptc(this.x, this.y + 1, Type.Water);
-              else if (this.x < 98 && Grid[this.x + 1][this.y] == 0) new ptc(this.x + 1, this.y, Type.Water);
-              else if (this.x > 1 && Grid[this.x - 1][this.y] == 0) new ptc(this.x - 1, this.y, Type.Water);
-              else if (this.y > 1 && Grid[this.x][this.y - 1] == 0) new ptc(this.x, this.y - 1, Type.Water);
+              if (this.SpawnType == Type.Tap) {
+                  adj = Grid[this.x][this.y + 1];
+                  if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
+                  adj = Grid[this.x][this.y - 1];
+                  if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
+                  adj = Grid[this.x + 1][this.y];
+                  if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
+                  adj = Grid[this.x - 1][this.y];
+                  if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
+              } else {
+                  if (Math.random() < .6) return;
+                  if (this.y < 98 && Grid[this.x][this.y + 1] == 0) new ptc(this.x, this.y + 1, this.SpawnType);
+                  else if (this.x < 98 && Grid[this.x + 1][this.y] == 0) new ptc(this.x + 1, this.y, this.SpawnType);
+                  else if (this.x > 1 && Grid[this.x - 1][this.y] == 0) new ptc(this.x - 1, this.y, this.SpawnType);
+                  else if (this.y > 1 && Grid[this.x][this.y - 1] == 0) new ptc(this.x, this.y - 1, this.SpawnType);
+              }
           }
       };
 
