@@ -7,10 +7,11 @@
           Brick: "Brick",
           Erase: "Erase",
           Tap: "Tap",
+          Air: "Air",
       };
       var width = 100;
       var height = 100;
-      var interval = 1000 / (25 /* fps */ );
+      var interval = 1000 / (40 /* fps */ );
       var frame = 1;
       var color = 0;
       var Selection = Type.Dust;
@@ -26,6 +27,68 @@
       }
       var mouseIsDown = false;
       var canvas = document.getElementById('display');
+      //##############
+      var force = 5;
+      var source = 100;
+      var sources = [];
+      sources.push([250, 250]);
+      var omx, omy;
+      var mx, my;
+      var res;
+      var displaySize = 500;
+      var fieldRes;
+      var canvas;
+      var DisplayFunc;
+
+      function prepareFrame(field) {
+          if ((omx >= 0 && omx < displaySize && omy >= 0 && omy < displaySize) && mouseIsDown && Selection == Type.Air) {
+              var dx = mx - omx;
+              var dy = my - omy;
+              var length = (Math.sqrt(dx * dx + dy * dy) + 0.5) | 0;
+           
+              if (length < 1) length = 1;
+              for (var i = 0; i < length; i++) {
+                  var x = (((omx + dx * (i / length)) / displaySize) * field.width()) | 0
+                  var y = (((omy + dy * (i / length)) / displaySize) * field.height()) | 0;
+                  field.setVelocity(x, y, dx, dy);
+                  field.setDensity(x, y, 50);
+              }
+              omx = mx;
+              omy = my;
+          }
+          for (var i = 0; i < sources.length; i++) {
+              var x = ((sources[i][0] / displaySize) * field.width()) | 0;
+              var y = ((sources[i][1] / displaySize) * field.height()) | 0;
+         
+              field.setDensity(x, y, 30);
+          }
+      }
+
+      function updatePressure() {
+          field.update();
+      }
+      // window.onload = function() {
+      var field = new FluidField(canvas);
+      //  document.getElementById("iterations").value = 10;
+      res = 100;
+      field.setUICallback(prepareFrame);
+      fieldRes = res;
+      field.setResolution(res, res);
+
+      function getTopLeftOfElement(element) {
+          var top = 0;
+          var left = 0;
+          do {
+              top += element.offsetTop;
+              left += element.offsetLeft;
+          } while (element = element.offsetParent);
+          return {
+              left: left,
+              top: top
+          };
+      }
+      
+     
       // canvas.style.cursor = "none";
       function getMousePos(canvas, evt) {
           var rect = canvas.getBoundingClientRect();
@@ -38,9 +101,21 @@
           var mousePos = getMousePos(canvas, evt);
           MouseX = Math.min(Math.round(mousePos.x / 5), 99);
           MouseY = Math.min(Math.round(mousePos.y / 5), 99);
+          var o = getTopLeftOfElement(canvas);
+          mx = event.clientX - o.left;
+          my = event.clientY - o.top;
+          if (mouseIsDown && (Selection != Type.Air)) {
+              if (Selection == Type.Erase) {
+                  if (Grid[MouseX][MouseY] != 0) Grid[MouseX][MouseY].remove();
+              } else if (Grid[MouseX][MouseY] == 0) new ptc(MouseX, MouseY, Selection);
+          }
       }, false);
       canvas.onmousedown = function(e) {
+          e.preventDefault();
           mouseIsDown = true;
+          var o = getTopLeftOfElement(canvas);
+          omx = mx = event.clientX - o.left;
+          omy = my = event.clientY - o.top;
       }
       canvas.onmouseup = function(e) {
           mouseIsDown = false;
@@ -64,6 +139,9 @@
               case 84: //e
                   Selection = Type.Tap;
                   break;
+              case 65: //a
+                  Selection = Type.Air;
+                  break;
           }
       }
 
@@ -73,7 +151,8 @@
           KeyEvent(keyCode);
       }
 
-      function ptc(x, y, type) { //, h, s, l) {
+      function ptc(x, y, type) {
+          if (Grid[x][y] != 0) return;
           this.x = x;
           this.y = y;
           Grid[x][y] = this;
@@ -81,7 +160,6 @@
           switch (type) {
               case Type.Dust: //d
                   h = color += .2;
-                  console.log(h);
                   s = 360;
                   l = 50;
                   break;
@@ -175,14 +253,19 @@
       };
 
       function init() {
-          var x = 50; //deprecated
-          var y = 50;
-          for (var i = 0; i < 100; i++) { //spawn n fish and add them to list
-              x = Math.floor(Math.random() * (width - 60)) + 30;
-              y = Math.floor(Math.random() * (height - 60)) + 30;
-              new ptc(x, y, Selection); // Math.random() * 360, 360, 50)
-          }
-          // return;
+          // for (var x = 0; x < 100; x++) {
+          //     for (var y = 0; y < 100; y++) { //spawn n fish and add them to list
+          //         new ptc(x,y*x%100, Type.Tap); // Math.random() * 360, 360, 50)
+          //     }
+          // }
+          // // var x = 50; //deprecated
+          // // var y = 50;
+          // // for (var i = 0; i < 100; i++) { //spawn n fish and add them to list
+          // //     x = Math.floor(Math.random() * (width - 60)) + 30;
+          // //     y = Math.floor(Math.random() * (height - 60)) + 30;
+          // //     new ptc(x, y, Type.Dust); // Math.random() * 360, 360, 50)
+          // // }
+          // // return;
       }
 
       function Dust(equation, canvas) {
@@ -193,6 +276,7 @@
           this.imageData = this.context.createImageData(width * this.scale, height * this.scale);
           this.then = +Date.now();
           this.paused = false;
+          field.setDisplayFunction(this.displayVelocity);
           this.drawFrame();
       }
       Dust.prototype = {
@@ -227,22 +311,36 @@
               for (var sx = -Size; sx < 5 + Size; sx++) {
                   for (var sy = -Size; sy < 5 + Size; sy++) {
                       var i = (((y * this.scale + (sy)) * width * this.scale) + (x * this.scale + (sx))) * 4;
-                      this.imageData.data[i] = R;// % 255;
-                      this.imageData.data[i + 1] = G;// % 255;
-                      this.imageData.data[i + 2] = B;// % 255;
+                      this.imageData.data[i] = R; // % 255;
+                      this.imageData.data[i + 1] = G; // % 255;
+                      this.imageData.data[i + 2] = B; // % 255;
                       this.imageData.data[i + 3] = 255;
                   }
               }
+          },
+          displayVelocity: function(field) {
+              context = canvas.getContext('2d');
+              context.save();
+              context.lineWidth = .5;
+              scale = 5
+              context.strokeStyle = "rgb(255,255,255)";
+              var vectorScale = 7;
+              context.beginPath();
+              // console.log(field.getXVelocity(50, 50) + field.getYVelocity(50, 50));
+              for (var x = 0; x < field.width(); x++) {
+                  for (var y = 0; y < field.height(); y++) {
+                      context.moveTo(x * scale + 0.5 * scale, y * scale + 0.5 * scale);
+                      if (Math.abs(field.getXVelocity(x, y) * field.getYVelocity(x, y)) > .005) context.lineTo((x + 0.5 + vectorScale * field.getXVelocity(x, y)) * scale, (y + 0.5 + vectorScale * field.getYVelocity(x, y)) * scale);
+                  }
+              }
+              context.stroke();
+              context.restore();
           },
           drawFrame: function() {
               this.context.fillRect(0, 0, 500, 500);
               this.context.fillStyle = husl.p.toHex(40, 60, 2); ////t'#0010'+offset.toString(16);
               this.context.fill();
-              if (mouseIsDown) {
-                  if (Selection == Type.Erase) {
-                      if (Grid[MouseX][MouseY] != 0) Grid[MouseX][MouseY].remove();
-                  } else if (Grid[MouseX][MouseY] == 0) new ptc(MouseX, MouseY, Selection);
-              }
+              updatePressure();
               this.imageData = this.context.getImageData(0, 0, 500, 500);
               for (var i = 0; i < particles.length; i++) {
                   particles[i].tick();
