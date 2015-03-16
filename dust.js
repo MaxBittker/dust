@@ -25,6 +25,7 @@
               Grid[x][y] = 0;
           }
       }
+      var PortField;
       var mouseIsDown = false;
       var canvas = document.getElementById('display');
       //##############
@@ -45,13 +46,12 @@
               var dx = mx - omx;
               var dy = my - omy;
               var length = (Math.sqrt(dx * dx + dy * dy) + 0.5) | 0;
-           
               if (length < 1) length = 1;
               for (var i = 0; i < length; i++) {
                   var x = (((omx + dx * (i / length)) / displaySize) * field.width()) | 0
                   var y = (((omy + dy * (i / length)) / displaySize) * field.height()) | 0;
                   field.setVelocity(x, y, dx, dy);
-                  field.setDensity(x, y, 50);
+                  field.setDensity(x, y, 100);
               }
               omx = mx;
               omy = my;
@@ -59,7 +59,6 @@
           for (var i = 0; i < sources.length; i++) {
               var x = ((sources[i][0] / displaySize) * field.width()) | 0;
               var y = ((sources[i][1] / displaySize) * field.height()) | 0;
-         
               field.setDensity(x, y, 30);
           }
       }
@@ -87,8 +86,6 @@
               top: top
           };
       }
-      
-     
       // canvas.style.cursor = "none";
       function getMousePos(canvas, evt) {
           var rect = canvas.getBoundingClientRect();
@@ -104,11 +101,7 @@
           var o = getTopLeftOfElement(canvas);
           mx = event.clientX - o.left;
           my = event.clientY - o.top;
-          if (mouseIsDown && (Selection != Type.Air)) {
-              if (Selection == Type.Erase) {
-                  if (Grid[MouseX][MouseY] != 0) Grid[MouseX][MouseY].remove();
-              } else if (Grid[MouseX][MouseY] == 0) new ptc(MouseX, MouseY, Selection);
-          }
+          Cursor();
       }, false);
       canvas.onmousedown = function(e) {
           e.preventDefault();
@@ -119,6 +112,14 @@
       }
       canvas.onmouseup = function(e) {
           mouseIsDown = false;
+      }
+
+      function Cursor() {
+          if (mouseIsDown && (Selection != Type.Air)) {
+              if (Selection == Type.Erase) {
+                  if (Grid[MouseX][MouseY] != 0) Grid[MouseX][MouseY].remove();
+              } else if (Grid[MouseX][MouseY] == 0) new ptc(MouseX, MouseY, Selection);
+          }
       }
       window.addEventListener("keydown", onKeyDown, false);
 
@@ -162,23 +163,28 @@
                   h = color += .2;
                   s = 360;
                   l = 50;
+                  d = 20;
                   break;
               case Type.Water: //d
                   h = 205;
                   s = 360;
                   l = 100;
+                  d = 15;
                   break;
               case Type.Brick: //d
                   h = 12;
                   s = 77;
                   l = 30;
+                  d = 0;
                   break;
               case Type.Tap: //d
                   h = 12;
                   s = 60;
                   l = 99;
+                  d = 0;
                   break;
           }
+          this.D = d;
           this.color = husl.p.toRGB(Math.round(h), s, l);
           particles.push(this);
       };
@@ -193,12 +199,18 @@
               var dx = 0;
               switch (this.type) {
                   case Type.Dust: //d
-                      dx = 0;
-                      dy = 1;
+                      dx = Math.round(Math.random() * this.D * PortField.getXVelocity(this.x, this.y));
+                      dy = Math.round(.7 + Math.random() * this.D * PortField.getYVelocity(this.x, this.y));
+                      if (dx != 0) dx = (dx / Math.abs(dx)) | 0;
+                      if (dy != 0) dy = (dy / Math.abs(dy)) | 0;
+                      // console.log(dx);
                       break;
                   case Type.Water: //d
-                      dx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
-                      dy = 1; //(Math.random() > .5 ? 0 : 1);;
+                      tdx = .7 * Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
+                      dx = Math.round(tdx + Math.random() * this.D * PortField.getXVelocity(this.x, this.y));
+                      dy = Math.round(.7 + Math.random() * this.D * PortField.getYVelocity(this.x, this.y));
+                      if (dx != 0) dx = (dx / Math.abs(dx)) | 0;
+                      if (dy != 0) dy = (dy / Math.abs(dy)) | 0;
                       this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 40) + 20));
                       break;
                   case Type.Brick: //d
@@ -319,9 +331,10 @@
               }
           },
           displayVelocity: function(field) {
+              PortField = field;
               context = canvas.getContext('2d');
               context.save();
-              context.lineWidth = .5;
+              context.lineWidth = .1;
               scale = 5
               context.strokeStyle = "rgb(255,255,255)";
               var vectorScale = 7;
@@ -337,6 +350,7 @@
               context.restore();
           },
           drawFrame: function() {
+              Cursor();
               this.context.fillRect(0, 0, 500, 500);
               this.context.fillStyle = husl.p.toHex(40, 60, 2); ////t'#0010'+offset.toString(16);
               this.context.fill();
