@@ -44,7 +44,7 @@
       var DisplayFunc;
 
       function prepareFrame(field) {
-          if ((omx >= 0 && omx < displaySize && omy >= 0 && omy < displaySize) && mouseIsDown && Selection == Type.Air) {
+          if ((omx >= 0 && omx < displaySize && omy >= 0 && omy < displaySize) && mouseIsDown && Selection === Type.Air) {
               var dx = mx - omx;
               var dy = my - omy;
               var length = (Math.sqrt(dx * dx + dy * dy) + 0.5) | 0;
@@ -118,9 +118,9 @@
 
       function Cursor() {
           if (mouseIsDown && (Selection != Type.Air)) {
-              if (Selection == Type.Erase) {
+              if (Selection === Type.Erase) {
                   if (Grid[MouseX][MouseY] != 0) Grid[MouseX][MouseY].remove();
-              } else if (Grid[MouseX][MouseY] == 0) new ptc(MouseX, MouseY, Selection);
+              } else if (Grid[MouseX][MouseY] === 0) new ptc(MouseX, MouseY, Selection);
           }
       }
       window.addEventListener("keydown", onKeyDown, false);
@@ -259,9 +259,9 @@
                   return;
               }
               if ((this.y + dy) > 99) dy = 0;
-              if (this.Move(0, dy) && (this.type == Type.Water || this.type == Type.Fire) && Math.random() > .2) dx = 0; // water spread
+              if (this.Move(0, dy) && (this.type === Type.Water || this.type === Type.Fire) && Math.random() > .2) dx = 0; // water spread
               if (!this.Move(dx, 0)) this.Move(-dx, 0);//fix this later
-              if (this.type == Type.Dust && (this.y + dy < 100)&& (this.y + dy > 0) && Grid[this.x][this.y + dy].type == Type.Water) {
+              if (this.type === Type.Dust && (this.y + dy < 100)&& (this.y + dy > 0) && Grid[this.x][this.y + dy].type === Type.Water) {
                   temp = Grid[this.x][this.y + dy];
                   Grid[this.x][this.y + dy] = this;
                   Grid[this.x][this.y] = temp;
@@ -275,7 +275,7 @@
                   this.remove();
                   return (1);
               }
-              if (Grid[this.x + dx][this.y + dy] == 0) {
+              if (Grid[this.x + dx][this.y + dy] === 0) {
                   Grid[this.x + dx][this.y + dy] = this;
                   Grid[this.x][this.y] = 0;
                   this.x += dx;
@@ -291,12 +291,12 @@
           Glitch: function() {
               if (Math.random() < .9) return;
               if (this.y < 98 && Grid[this.x][this.y + 1] == 0) new ptc(this.x, this.y + 1, Selection);
-              else if (this.x < 98 && Grid[this.x + 1][this.y] == 0) new ptc(this.x + 1, this.y, Selection);
-              else if (this.x > 1 && Grid[this.x - 1][this.y] == 0) new ptc(this.x - 1, this.y, Selection);
-              else if (this.y > 1 && Grid[this.x][this.y - 1] == 0) new ptc(this.x, this.y - 1, Selection);
+              else if (this.x < 98 && Grid[this.x + 1][this.y] === 0) new ptc(this.x + 1, this.y, Selection);
+              else if (this.x > 1 && Grid[this.x - 1][this.y] === 0) new ptc(this.x - 1, this.y, Selection);
+              else if (this.y > 1 && Grid[this.x][this.y - 1] === 0) new ptc(this.x, this.y - 1, Selection);
           },
           Tap: function() {
-              if (this.SpawnType == Type.Tap) {
+              if (this.SpawnType === Type.Tap) {
                   adj = Grid[this.x][this.y + 1];
                   if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
                   adj = Grid[this.x][this.y - 1];
@@ -307,10 +307,10 @@
                   if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
               } else {
                   if (Math.random() < .6) return;
-                  if (this.y < 98 && Grid[this.x][this.y + 1] == 0) new ptc(this.x, this.y + 1, this.SpawnType);
-                  else if (this.x < 98 && Grid[this.x + 1][this.y] == 0) new ptc(this.x + 1, this.y, this.SpawnType);
-                  else if (this.x > 1 && Grid[this.x - 1][this.y] == 0) new ptc(this.x - 1, this.y, this.SpawnType);
-                  else if (this.y > 1 && Grid[this.x][this.y - 1] == 0) new ptc(this.x, this.y - 1, this.SpawnType);
+                  if (this.y < 98 && Grid[this.x][this.y + 1] === 0) new ptc(this.x, this.y + 1, this.SpawnType);
+                  else if (this.x < 98 && Grid[this.x + 1][this.y] === 0) new ptc(this.x + 1, this.y, this.SpawnType);
+                  else if (this.x > 1 && Grid[this.x - 1][this.y] === 0) new ptc(this.x - 1, this.y, this.SpawnType);
+                  else if (this.y > 1 && Grid[this.x][this.y - 1] === 0) new ptc(this.x, this.y - 1, this.SpawnType);
               }
           }
       };
