@@ -173,12 +173,15 @@
           Grid[x][y] = this;
           this.type = type;
           this.SpawnType = type;
+          this.life = (Math.random() * 50) | 0;
+          this.flamable = false;
           switch (type) {
               case Type.Dust: //d
                   h = color += .2;
                   s = 360;
                   l = 50;
                   d = 20;
+                  this.flamable = true;
                   break;
               case Type.Water: //d
                   h = 205;
@@ -256,6 +259,11 @@
                       delta = this.wind(0, 0);
                       this.color = husl.p.toRGB(Math.floor(Math.random() * 20) + 10, 360, Math.floor((Math.random() * 40) + 40));
                       this.Burn();
+                      this.life -= 1;
+                      if (this.life < 0) {
+                          this.remove();
+                          return
+                      }
                       break;
               }
               dx = delta[0];
@@ -291,8 +299,18 @@
               return (0);
           },
           Burn: function() {
-              PortField.setDensity(this.x, this.y, 90);
-              PortField.setVelocity(this.x, this.y, 0, -.5);
+              for (var i = 0; i < 4; i++) {
+                  if (0 > this.x + Adjacent[i][0] || this.x + Adjacent[i][0] > 99 || 0 > this.y + Adjacent[i][1] || this.y + Adjacent[i][1] > 99) continue;
+                  adj = Grid[this.x + Adjacent[i][0]][this.y + Adjacent[i][1]];
+                  if (adj != 0 && adj.flamable === true) adj.life -= 3;
+                  if (adj.life < 0) {
+                      adj.type = Type.Fire;
+                      adj.life = 40;
+                  }
+                  if (adj != 0 && adj.type === Type.Water) this.life -= 10;
+              }
+              PortField.setDensity(this.x, this.y, 60);
+              PortField.setVelocity(this.x, this.y, 0, -.2);
           },
           Glitch: function() {
               if (Math.random() < .9) return;
@@ -304,7 +322,7 @@
           Tap: function() {
               if (this.SpawnType === Type.Tap) {
                   for (var i = 0; i < 4; i++) {
-                    if (0 > this.x+Adjacent[i][0] || this.x+Adjacent[i][0] > 99 || 0 > this.y+Adjacent[i][1] || this.y+Adjacent[i][1] > 99)  continue;
+                      if (0 > this.x + Adjacent[i][0] || this.x + Adjacent[i][0] > 99 || 0 > this.y + Adjacent[i][1] || this.y + Adjacent[i][1] > 99) continue;
                       adj = Grid[this.x + Adjacent[i][0]][this.y + Adjacent[i][1]];
                       if (adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
                   }
