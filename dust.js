@@ -9,7 +9,9 @@
           Tap: "Tap",
           Air: "Air",
           Fire: "Fire",
-          Glitch: "Glitch"
+          Glitch: "Glitch",
+          Powder: "Powder",
+          Nitro: "Nitro"
       };
       var width = 100;
       var height = 100;
@@ -157,6 +159,12 @@
               case 71: //g
                   Selection = Type.Glitch;
                   break;
+              case 88: //g
+                  Selection = Type.Nitro;
+                  break;
+              case 90: //g
+                  Selection = Type.Powder;
+                  break;
           }
       }
 
@@ -173,21 +181,21 @@
           Grid[x][y] = this;
           this.type = type;
           this.SpawnType = type;
-          this.life = (Math.random() * 50) | 0;
-          this.flamable = false;
+          this.life = 100;
+          this.flamable = 0;
           switch (type) {
               case Type.Dust: //d
                   h = color += .2;
                   s = 360;
                   l = 50;
                   d = 20;
-                  this.flamable = true;
+                  this.flamable = 1;
                   break;
               case Type.Water: //d
                   h = 205;
                   s = 360;
                   l = 100;
-                  d = 15;
+                  d = 20;
                   break;
               case Type.Brick: //d
                   h = 12;
@@ -205,12 +213,29 @@
                   s = 360;
                   l = 99;
                   d = 40;
+                  this.life = (Math.random() * 50) | 0;
                   break;
               case Type.Glitch: //d
                   h = Math.random() * 360 | 0;
                   s = 100;
                   l = Math.random() * 100 | 0;
                   d = 0;
+                  break;
+              case Type.Powder: //d
+                  h = 50;
+                  s = 10;
+                  l = 20;
+                  d = 35;
+                  this.life = 1;
+                  this.flamable = 6;
+                  break;
+              case Type.Nitro: //d
+                  h = 130;
+                  s = 100;
+                  l = 50;
+                  d = 15;
+                  this.life = 1;
+                  this.flamable = 10;
                   break;
           }
           this.D = d;
@@ -242,6 +267,13 @@
                       tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
                       delta = this.wind(tdx, 1);
                       this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 40) + 30));
+                      break;
+                  case Type.Powder: //d
+                      delta = this.wind(0, 1);
+                      break;
+                  case Type.Nitro: //d
+                      tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
+                      delta = this.wind(tdx, 1);
                       break;
                   case Type.Brick: //d
                       return;
@@ -282,6 +314,13 @@
                   temp.y -= dy;
                   this.y += dy;
               }
+              if (this.type === Type.Water && (this.y + dy < 100) && (this.y + dy > 0) && Grid[this.x][this.y + dy].type === Type.Nitro) {
+                  temp = Grid[this.x][this.y + dy];
+                  Grid[this.x][this.y + dy] = this;
+                  Grid[this.x][this.y] = temp;
+                  temp.y -= dy;
+                  this.y += dy;
+              }
               return;
           },
           Move: function(dx, dy) {
@@ -302,10 +341,16 @@
               for (var i = 0; i < 4; i++) {
                   if (0 > this.x + Adjacent[i][0] || this.x + Adjacent[i][0] > 99 || 0 > this.y + Adjacent[i][1] || this.y + Adjacent[i][1] > 99) continue;
                   adj = Grid[this.x + Adjacent[i][0]][this.y + Adjacent[i][1]];
-                  if (adj != 0 && adj.flamable === true) adj.life -= 3;
+                  if (adj != 0 && adj.flamable > 0) adj.life -= 3;
                   if (adj.life < 0) {
+                      PortField.setVelocity(adj.x, adj.y, (Math.random() - .5) * 5 * adj.flamable, (Math.random() - .5) * 5 * adj.flamable);
+                      if (adj.type === Type.Nitro) {
+                          adj.type = Type.Fire;
+                          adj.Burn();
+                      }
                       adj.type = Type.Fire;
                       adj.life = 40;
+                      // adj.Burn();
                   }
                   if (adj != 0 && adj.type === Type.Water) this.life -= 10;
               }
@@ -335,12 +380,7 @@
               }
           }
       };
-      // adj = Grid[this.x][this.y - 1];
-      // if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
-      // adj = Grid[this.x + 1][this.y];
-      // if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
-      // adj = Grid[this.x - 1][this.y];
-      // if (adj != null && adj != 0 && adj.type != Type.Tap) this.SpawnType = adj.type;
+
       function init() {
           // for (var x = 0; x < 100; x++) {
           //     for (var y = 0; y < 100; y++) { //spawn n fish and add them to list
@@ -414,13 +454,15 @@
               context.lineWidth = .1;
               scale = 5
               context.strokeStyle = "rgb(255,255,255)";
-              var vectorScale = 7;
+              var vectorScale = 8;
               context.beginPath();
               // console.log(field.getXVelocity(50, 50) + field.getYVelocity(50, 50));
               for (var x = 0; x < field.width(); x++) {
                   for (var y = 0; y < field.height(); y++) {
-                      context.moveTo(x * scale + 0.5 * scale, y * scale + 0.5 * scale);
-                      if (Math.abs(field.getXVelocity(x, y) * field.getYVelocity(x, y)) > .005) context.lineTo((x + 0.5 + vectorScale * field.getXVelocity(x, y)) * scale, (y + 0.5 + vectorScale * field.getYVelocity(x, y)) * scale);
+                      if (Math.abs(field.getXVelocity(x, y) * field.getYVelocity(x, y)) > .003) {
+                          context.moveTo(x * scale + 0.5 * scale, y * scale + 0.5 * scale);
+                          context.lineTo((x + 0.5 + vectorScale * field.getXVelocity(x, y)) * scale, (y + 0.5 + vectorScale * field.getYVelocity(x, y)) * scale);
+                      }
                   }
               }
               context.stroke();
