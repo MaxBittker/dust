@@ -1,0 +1,27 @@
+{
+  "name": "dust",
+  "version": "1.0.0",
+  "description": "\"Imagine the cool phenomenon when the wind blows the falling leaves. This game simulates the phenomenon with powder (dots)!\" -DAN-BALL",
+  "main": "dust.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MaxBittker/dust.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MaxBittker/dust/issues"
+  },
+  "homepage": "https://github.com/MaxBittker/dust#readme",
+  "dependencies": {
+    "husl": "^6.0.1",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "jshint": "^2.8.0",
+    "jshint-loader": "^0.8.3"
+  }
+}

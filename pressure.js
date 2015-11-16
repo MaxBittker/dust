@@ -24,7 +24,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-function FluidField(canvas) {
+module.exports = function FluidField(canvas) {
     function addFields(x, s, dt)
     {
         for (var i=0; i<size ; i++ ) x[i] += dt*s[i];
