@@ -47,7 +47,7 @@ var canvas = document.getElementById('display');
 var force = 5;
 var source = 100;
 var sources = [];
-sources.push([250, 250]);
+// sources.push([250, 250]);
 var omx, omy;
 var mx, my;
 var res;
@@ -71,11 +71,11 @@ function prepareFrame(field) {
         omx = mx;
         omy = my;
     }
-    for (var i = 0; i < sources.length; i++) {
-        var x = ((sources[i][0] / displaySize) * field.width()) | 0;
-        var y = ((sources[i][1] / displaySize) * field.height()) | 0;
-        field.setDensity(x, y, 30);
-    }
+    // for (var i = 0; i < sources.length; i++) {
+    // var x = ((sources[i][0] / displaySize) * field.width()) | 0;
+    // var y = ((sources[i][1] / displaySize) * field.height()) | 0;
+    // field.setDensity(x, y, 30);
+    // }
 }
 
 function updatePressure() {
@@ -133,7 +133,7 @@ function Cursor() {
     if (mouseIsDown && (Selection != Type.Air)) {
         for (var sx = -cursorSize + 1; sx < cursorSize; sx++) {
             for (var sy = -cursorSize + 1; sy < cursorSize; sy++) {
-                if ((sx * sx + sy * sy) < .7 * (cursorSize * cursorSize))
+                if ((sx * sx + sy * sy) < .4 * (cursorSize * cursorSize))
                     touchLoc({
                         x: MouseX + sx,
                         y: MouseY + sy
@@ -258,7 +258,7 @@ function ptc(x, y, type) {
         case Type.Glitch: //d
             h = Math.random() * 360 | 0;
             s = 100;
-            l = 30+ Math.random() * 30 | 0;
+            l = 30 + Math.random() * 30 | 0;
             d = 0;
             break;
         case Type.Powder: //d
