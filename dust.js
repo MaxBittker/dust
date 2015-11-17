@@ -447,7 +447,7 @@ function init() {
 }
 
 function Dust(equation, canvas) {
-    init();
+    // init();
     this.canvas = canvas;
     this.scale = 5 //canvas.getAttribute('width') / width;
     this.context = canvas.getContext('2d');
