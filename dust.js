@@ -540,7 +540,7 @@ Dust.prototype = {
         }
         this.context.putImageData(this.imageData, 0, 0);
 
-        document.getElementById('SelectionDisplay').innerHTML = 'Selection: ' + Selection + 'Size: ' + cursorSize + '   ------------- Particles: ' + particles.length;
+        document.getElementById('SelectionDisplay').innerHTML = 'Selection: ' + Selection + ' Size: ' + cursorSize + '   ------------- Particles: ' + particles.length;
     }
 };
 var requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {

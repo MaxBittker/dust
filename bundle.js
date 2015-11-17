@@ -65,10 +65,13 @@
 	var height = 100;
 	var interval = 1000 / (30 /* fps */ );
 	var frame = 1;
+
 	var color = 0;
+
 	var Selection = Type.Dust;
 	var MouseX = 0;
 	var MouseY = 0;
+	var cursorSize = 1;
 	var particles = [];
 	var Grid = new Array(100);
 	for (var y = 0; y < 100; y++) Grid[y] = new Array(100);
@@ -108,8 +111,8 @@
 	        for (var i = 0; i < length; i++) {
 	            var x = (((omx + dx * (i / length)) / displaySize) * field.width()) | 0
 	            var y = (((omy + dy * (i / length)) / displaySize) * field.height()) | 0;
-	            field.setVelocity(x, y, dx, dy);
-	            field.setDensity(x, y, 50);
+	            field.setVelocity(x, y, dx * cursorSize, dy * cursorSize);
+	            field.setDensity(x, y, cursorSize * 20);
 	        }
 	        omx = mx;
 	        omy = my;
@@ -174,15 +177,37 @@
 
 	function Cursor() {
 	    if (mouseIsDown && (Selection != Type.Air)) {
-	        if (Selection === Type.Erase) {
-	            if (Grid[MouseX][MouseY] != 0) Grid[MouseX][MouseY].remove();
-	        } else if (Grid[MouseX][MouseY] === 0) new ptc(MouseX, MouseY, Selection);
+	        for (var sx = -cursorSize + 1; sx < cursorSize; sx++) {
+	            for (var sy = -cursorSize + 1; sy < cursorSize; sy++) {
+	                if ((sx * sx + sy * sy) < .7 * (cursorSize * cursorSize))
+	                    touchLoc({
+	                        x: MouseX + sx,
+	                        y: MouseY + sy
+	                    })
+	            }
+	        }
 	    }
+	}
+
+	function touchLoc(loc) {
+	    if (!inBounds(loc))
+	        return
+	    var point = Grid[loc.x][loc.y]
+	    if (Selection === Type.Erase) {
+	        if (point != 0) point.remove();
+	    } else if (point === 0) new ptc(loc.x, loc.y, Selection);
 	}
 	window.addEventListener("keydown", onKeyDown, false);
 
+	function inBounds(loc) {
+	    if (loc.x >= width || loc.x < 0)
+	        return false
+	    if (loc.y >= height || loc.y < 0)
+	        return false
+	    return true
+	}
+
 	function KeyEvent(keyCode) {
-	    console.log(keyCode)
 	    switch (keyCode) {
 	        case 81: //q
 	            Selection = Type.Dust;
@@ -214,11 +239,12 @@
 	        case 90: //g
 	            Selection = Type.Powder;
 	            break;
-	        case 90: //g
-	            Selection = Type.Powder;
-	            break;
-	        case 90: //g
-	            Selection = Type.Powder;
+	        case 49: //1
+	            if (cursorSize > 1)
+	                cursorSize--
+	                break;
+	        case 50: //2
+	            cursorSize++
 	            break;
 	    }
 	}
@@ -278,7 +304,7 @@
 	        case Type.Glitch: //d
 	            h = Math.random() * 360 | 0;
 	            s = 100;
-	            l = Math.random() * 100 | 0;
+	            l = 30+ Math.random() * 30 | 0;
 	            d = 0;
 	            break;
 	        case Type.Powder: //d
@@ -467,7 +493,7 @@
 	}
 
 	function Dust(equation, canvas) {
-	    init();
+	    // init();
 	    this.canvas = canvas;
 	    this.scale = 5 //canvas.getAttribute('width') / width;
 	    this.context = canvas.getContext('2d');
@@ -549,7 +575,7 @@
 
 	        this.context.font = "20px courier"
 	        this.context.fillStyle = husl.p.toHex(40, 60, 90); ////t'#0010'+offset.toString(16);
-	        this.context.fillText(Selection.toString(), 10, 20)
+	        this.context.fillText(Selection.toString() + ":" + cursorSize, 10, 20)
 	        this.context.fill();
 
 	        updatePressure();
@@ -560,7 +586,7 @@
 	        }
 	        this.context.putImageData(this.imageData, 0, 0);
 
-	        document.getElementById('SelectionDisplay').innerHTML = 'Selection: ' + Selection + ' ------------- Particles: ' + particles.length;
+	        document.getElementById('SelectionDisplay').innerHTML = 'Selection: ' + Selection + ' Size: ' + cursorSize + '   ------------- Particles: ' + particles.length;
 	    }
 	};
 	var requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
