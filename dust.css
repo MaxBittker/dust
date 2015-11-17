@@ -1,16 +1,23 @@
 body {
     margin: 10px;
     padding: 3px;
-    background: #0C0C18 ;
+    background: #3D3D40;
     font-family: monospace;
-    font-size:normal;
-    color:#cccccc;
-
+    font-size: normal;
+    color: #cccccc;
 }
 
-/* Display error mesasges in bright red */
-#error-display {
-    color: #ff0000;
+body > div {
+    width: 500px;
+    margin: auto;
+    /*background-color: #fff;*/
+}
+
+#display {
+    border: 4px;
+    border-style: solid;
+    border-color: #aa9;
+    border-radius: 2px;
 }
 
 div[data-formula] {
@@ -19,6 +26,7 @@ div[data-formula] {
 
 a {
     color: #3333ee;
+    font-size: 1.5em;
     text-decoration: none;
 }
 
@@ -30,31 +38,8 @@ a:hover {
     vertical-align: center;
 }
 
-div[data-formula] canvas {
-    float: left;
-    margin-right: 10px;
-}
-
 .stop-scrolling {
-  height: 100%;
-  overflow: hidden;
+    height: 100%;
+    overflow: hidden;
 }
 
-    ocean-display {
-    transform-origin: 0% 0%;
-      -ms-transform-origin: 0% 0%;
-      -webkit-transform-origin: 0% 0%;
-      -o-transform-origin: 0% 0%;
-      -moz-transform-origin: 0% 0%;
-      transform: scale(5, 5);
-      -ms-transform: scale(5, 5); 
-      -webkit-transform: scale(5, 5); 
-      -o-transform: scale(5, 5); 
-      -moz-transform: scale(5, 5); 
-    image-rendering: crisp-edges;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: -webkit-optimize-contrast;
-     image-rendering:-webkit-pixelated;
-    image-rendering: optimize-contrast;
-      -ms-interpolation-mode: nearest-neighbor;
-    }
