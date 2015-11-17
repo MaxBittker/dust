@@ -182,6 +182,11 @@
       if (Grid[x][y] != 0) return;
       this.x = x;
       this.y = y;
+      this.dx = 0
+      this.dy = 0
+      this.friction = .8
+      // this.inertia = 1
+          //velocity and inertia will go here
       Grid[x][y] = this;
       this.type = type;
       this.SpawnType = type;
@@ -255,29 +260,27 @@
       wind: function(dx, dy) {
           dx = Math.round((.7 * dx) + Math.random() * this.D * PortField.getXVelocity(this.x, this.y));
           dy = Math.round((.7 * dy) + Math.random() * this.D * PortField.getYVelocity(this.x, this.y));
-          if (dx != 0) dx = (dx / Math.abs(dx)) | 0;
-          if (dy != 0) dy = (dy / Math.abs(dy)) | 0;
+          // if (dx != 0) dx = (dx / Math.abs(dx)) | 0;
+          // if (dy != 0) dy = (dy / Math.abs(dy)) | 0;
           return ([dx, dy]);
       },
       tick: function(dir) {
-          var dy = 0;
-          var dx = 0;
-          var delta = [0, 0];
+          var accel = [0, 0];
           switch (this.type) {
               case Type.Dust: //d
-                  delta = this.wind(0, 1);
+                  accel = this.wind(0, 1);
                   break;
               case Type.Water: //d
                   tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
-                  delta = this.wind(tdx, 1);
+                  accel = this.wind(tdx, 1);
                   this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 40) + 30));
                   break;
               case Type.Powder: //d
-                  delta = this.wind(0, 1);
+                  accel = this.wind(0, 1);
                   break;
               case Type.Nitro: //d
                   tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
-                  delta = this.wind(tdx, 1);
+                  accel = this.wind(tdx, 1);
                   break;
               case Type.Brick: //d
                   return;
@@ -292,7 +295,7 @@
                   break;
               case Type.Fire: //d
                   tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
-                  delta = this.wind(0, 0);
+                  accel = this.wind(0, 0);
                   this.color = husl.p.toRGB(Math.floor(Math.random() * 20) + 10, 360, Math.floor((Math.random() * 40) + 40));
                   this.Burn();
                   this.life -= 1;
@@ -302,8 +305,25 @@
                   }
                   break;
           }
-          dx = delta[0];
-          dy = delta[1];
+          this.dx *= this.friction
+          this.dy *= this.friction
+
+          this.dx += accel[0];
+          this.dy += accel[1];
+          
+          var dx = 0
+          var dy = 0
+          if (this.dx >= 1)
+              dx = 1
+          else if (this.dx <= -1)
+              dx = -1
+
+          if (this.dy >= 1)
+              dy = 1
+          else if (this.dy <= -1)
+              dy = -1
+
+          if (dx > 1) dx = 1
           if ((this.x + dx) < 0 || (this.x + dx) > 99 || this.y + dy < 0) {
               this.remove();
               return;
