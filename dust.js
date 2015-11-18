@@ -15,7 +15,8 @@ var Type = {
     Nitro: "Nitro",
     Dirt: "Dirt",
     Seed: "Seed",
-    Plant: "Plant"
+    Plant: "Plant",
+    Lava: "Lava"
 
 };
 
@@ -168,6 +169,7 @@ function inBounds(loc) {
 }
 
 function KeyEvent(keyCode) {
+  console.log(keyCode)
     switch (keyCode) {
         case 81: //q
             Selection = Type.Dust;
@@ -204,6 +206,9 @@ function KeyEvent(keyCode) {
             break;
         case 83: //s
             Selection = Type.Seed;
+            break;
+        case 87: //w
+            Selection = Type.Lava;
             break;
 
         case 49: //1
@@ -372,7 +377,7 @@ ptc.prototype = {
                 return;
                 break;
             case Type.Water: //d
-                tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
+                tdx = Mathf.loor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
                 accel = this.wind(tdx, 1);
                 this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 20) + 30));
                 break;
