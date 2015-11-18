@@ -58,7 +58,11 @@
 	    Fire: "Fire",
 	    Glitch: "Glitch",
 	    Powder: "Powder",
-	    Nitro: "Nitro"
+	    Nitro: "Nitro",
+	    Dirt: "Dirt",
+	    Seed: "Seed",
+	    Plant: "Plant"
+
 	};
 
 	var width = 100;
@@ -86,6 +90,7 @@
 	    [1, 0],
 	    [0, -1]
 	];
+
 	var PortField;
 	var mouseIsDown = false;
 	var canvas = document.getElementById('display');
@@ -93,7 +98,7 @@
 	var force = 5;
 	var source = 100;
 	var sources = [];
-	sources.push([250, 250]);
+	// sources.push([250, 250]);
 	var omx, omy;
 	var mx, my;
 	var res;
@@ -117,11 +122,11 @@
 	        omx = mx;
 	        omy = my;
 	    }
-	    for (var i = 0; i < sources.length; i++) {
-	        var x = ((sources[i][0] / displaySize) * field.width()) | 0;
-	        var y = ((sources[i][1] / displaySize) * field.height()) | 0;
-	        field.setDensity(x, y, 30);
-	    }
+	    // for (var i = 0; i < sources.length; i++) {
+	    // var x = ((sources[i][0] / displaySize) * field.width()) | 0;
+	    // var y = ((sources[i][1] / displaySize) * field.height()) | 0;
+	    // field.setDensity(x, y, 30);
+	    // }
 	}
 
 	function updatePressure() {
@@ -164,6 +169,7 @@
 	    my = evt.clientY - o.top;
 	    Cursor();
 	}, false);
+
 	canvas.onmousedown = function(e) {
 	    e.preventDefault();
 	    mouseIsDown = true;
@@ -179,7 +185,7 @@
 	    if (mouseIsDown && (Selection != Type.Air)) {
 	        for (var sx = -cursorSize + 1; sx < cursorSize; sx++) {
 	            for (var sy = -cursorSize + 1; sy < cursorSize; sy++) {
-	                if ((sx * sx + sy * sy) < .7 * (cursorSize * cursorSize))
+	                if ((sx * sx + sy * sy) < .4 * (cursorSize * cursorSize))
 	                    touchLoc({
 	                        x: MouseX + sx,
 	                        y: MouseY + sy
@@ -239,6 +245,13 @@
 	        case 90: //g
 	            Selection = Type.Powder;
 	            break;
+	        case 68: //d
+	            Selection = Type.Dirt;
+	            break;
+	        case 83: //s
+	            Selection = Type.Seed;
+	            break;
+
 	        case 49: //1
 	            if (cursorSize > 1)
 	                cursorSize--
@@ -269,12 +282,40 @@
 	    this.SpawnType = type;
 	    this.life = 100;
 	    this.flamable = 0;
+	    this.hue = null
+	    this.moisture = 0
+	    this.sinks = false;
+
 	    switch (type) {
 	        case Type.Dust: //d
-	            h = color += .2;
+	            this.hue = color += .2;
+	            h = this.hue
 	            s = 360;
 	            l = 50;
 	            d = 20;
+	            this.flamable = 1;
+	            this.sinks = true;
+	            break;
+	        case Type.Dirt: //d
+	            h = 35;
+	            s = 150;
+	            l = 46;
+	            d = 20;
+	            this.sinks = true;
+	            break;
+	        case Type.Seed: //d
+	            h = 150;
+	            s = 130;
+	            l = 60;
+	            d = 20;
+	            this.flamable = 2;
+	            break;
+	        case Type.Plant: //d
+	            h = 150;
+	            s = 100;
+	            l = 30;
+	            d = 20;
+	            this.life = 15;
 	            this.flamable = 1;
 	            break;
 	        case Type.Water: //d
@@ -282,7 +323,9 @@
 	            s = 360;
 	            l = 100;
 	            d = 20;
+	            this.moisture = 1
 	            break;
+	            f
 	        case Type.Brick: //d
 	            h = 12;
 	            s = 77;
@@ -304,7 +347,7 @@
 	        case Type.Glitch: //d
 	            h = Math.random() * 360 | 0;
 	            s = 100;
-	            l = 30+ Math.random() * 30 | 0;
+	            l = 30 + Math.random() * 30 | 0;
 	            d = 0;
 	            break;
 	        case Type.Powder: //d
@@ -312,8 +355,9 @@
 	            s = 10;
 	            l = 20;
 	            d = 35;
+	            this.sinks = true;
 	            this.life = 1;
-	            this.flamable = 6;
+	            this.flamable = 8;
 	            break;
 	        case Type.Nitro: //d
 	            h = 130;
@@ -321,7 +365,7 @@
 	            l = 50;
 	            d = 15;
 	            this.life = 1;
-	            this.flamable = 10;
+	            this.flamable = 12;
 	            break;
 	    }
 	    this.D = d;
@@ -346,6 +390,29 @@
 	        switch (this.type) {
 	            case Type.Dust: //d
 	                accel = this.wind(0, 1);
+	                this.hue += 1
+	                this.color = husl.p.toRGB(this.hue, 360, 50);
+	                break;
+	            case Type.Dirt: //d
+	                // console.log(this.moisture)
+	                // this.moisture *= .9995 //drying up
+	                this.color = husl.p.toRGB(35, 150, 45 - Math.round(20 * this.moisture));
+	                accel = this.wind(0, 1);
+	                break;
+	            case Type.Seed: //d
+	                accel = this.wind(0, 1);
+	                if (Grid[this.x][this.y + 1] && Grid[this.x][this.y + 1].type == Type.Dirt && Grid[this.x][this.y + 1].moisture > .5) {
+	                    var x = this.x
+	                    var y = this.y
+	                    this.remove()
+	                    Grid[x][y] = new ptc(x, y, Type.Plant)
+	                        // Grid[x][y - 1] = new ptc(x, y, Type.Plant)
+	                    return
+	                }
+	                break;
+	            case Type.Plant: //d
+	                this.Grow();
+	                return;
 	                break;
 	            case Type.Water: //d
 	                tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
@@ -389,6 +456,9 @@
 	        this.dx += accel[0];
 	        this.dy += accel[1];
 
+	        this.dx = Math.min(this.dx, 5)
+	        this.dy = Math.min(this.dy, 5)
+
 	        var dx = 0
 	        var dy = 0
 
@@ -410,7 +480,41 @@
 	        if ((this.y + dy) > 99) dy = 0;
 	        if (this.Move(0, dy) && (this.type === Type.Water || this.type === Type.Fire) && Math.random() > .2) dx = 0; // water spread
 	        if (!this.Move(dx, 0)) this.Move(-dx, 0); //fix this later
-	        if (this.type === Type.Dust && (this.y + dy < 100) && (this.y + dy > 0) && Grid[this.x][this.y + dy].type === Type.Water) {
+
+	        if (this.type === Type.Water) {
+	            _.every(this.ReturnAdjacent({
+	                x: this.x,
+	                y: this.y
+	            }), (point) => {
+	                if (point.type === Type.Dirt && point.moisture < 1) {
+	                    var space = 1 - point.moisture
+	                    var change = Math.min(space, this.moisture)
+	                    point.moisture += change
+	                    this.moisture -= change
+	                    if (this.moisture < .01) {
+	                        this.remove()
+	                        return false
+	                    }
+	                }
+	                return true
+	            })
+	        }
+	        if (this.type === Type.Dirt && this.moisture > .2) {
+	            _.each(this.ReturnAdjacent({
+	                x: this.x,
+	                y: this.y
+	            }), (point) => {
+	                if (point.type === Type.Dirt && point.moisture < this.moisture) {
+	                    var halfdiff = (this.moisture - point.moisture) / 4
+	                    point.moisture += halfdiff
+	                    this.moisture -= halfdiff
+	                        // return false
+	                }
+	                return true
+	            })
+	        }
+
+	        if (this.sinks && (this.y + dy < 100) && (this.y + dy > 0) && Grid[this.x][this.y + dy].type === Type.Water) {
 	            temp = Grid[this.x][this.y + dy];
 	            Grid[this.x][this.y + dy] = this;
 	            Grid[this.x][this.y] = temp;
@@ -426,6 +530,7 @@
 	        }
 	        return;
 	    },
+
 	    Move: function(dx, dy) {
 	        if ((this.x + dx) < 0 || ((this.x + dx) > 99)) {
 	            this.remove();
@@ -459,6 +564,28 @@
 	        }
 	        PortField.setDensity(this.x, this.y, 60);
 	        PortField.setVelocity(this.x, this.y, 0, -.2);
+	    },
+	    ReturnAdjacent: function(point) {
+	        var AdjSet = []
+	        for (var dx = -1; dx <= 1; dx++) {
+	            for (var dy = -1; dy <= 1; dy++) {
+	                if (!(dx == 0 && dy == 0)) {
+	                    var nPoint = {
+	                        x: point.x + dx,
+	                        y: point.y + dy
+	                    }
+	                    if (Grid[nPoint.x] !== undefined && Grid[nPoint.x][nPoint.y] !== undefined && Grid[nPoint.x][nPoint.y] !== 0)
+	                        AdjSet.push(Grid[nPoint.x][nPoint.y])
+	                }
+	            }
+	        }
+	        return AdjSet
+	    },
+	    Grow: function() {
+	        if ((Math.random() < .01) && this.y > 1 && Grid[this.x][this.y - 1] === 0) new ptc(this.x, this.y - 1, Type.Plant);
+	        if (Math.random() < .003 && this.x > 1 && Grid[this.x - 1][this.y] === 0) new ptc(this.x - 1, this.y, Type.Plant);
+	        if (Math.random() < .003 && this.x < 98 && Grid[this.x + 1][this.y] === 0) new ptc(this.x + 1, this.y, Type.Plant);
+
 	    },
 	    Glitch: function() {
 	        if (Math.random() < .9) return;
@@ -503,6 +630,7 @@
 	    field.setDisplayFunction(this.displayVelocity);
 	    this.drawFrame();
 	}
+
 	Dust.prototype = {
 	    play: function() {
 	        this.paused = false;
@@ -530,8 +658,7 @@
 	        var G = Math.floor(color[1] * 255); //(color & 0x00ff00) >>> 8;
 	        var B = Math.floor(color[2] * 255); // (color & 0x0000ff) >>> 0;
 	        var Size = 0;
-	        // if(ptc.type==Type.Water && x>0 && x<98)
-	        //  Size = Math.floor(Math.random()*2);
+
 	        for (var sx = -Size; sx < 5 + Size; sx++) {
 	            for (var sy = -Size; sy < 5 + Size; sy++) {
 	                var i = (((y * this.scale + (sy)) * width * this.scale) + (x * this.scale + (sx))) * 4;
