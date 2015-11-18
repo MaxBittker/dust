@@ -75,7 +75,7 @@
 	var Selection = Type.Dust;
 	var MouseX = 0;
 	var MouseY = 0;
-	var cursorSize = 1;
+	var cursorSize = 2;
 	var particles = [];
 	var Grid = new Array(100);
 	for (var y = 0; y < 100; y++) Grid[y] = new Array(100);
