@@ -254,7 +254,7 @@ function ptc(x, y, type) {
             h = 35;
             s = 150;
             l = 46;
-            d = 20;
+            d = 10;
             this.sinks = true;
             break;
         case Type.Seed: //d
@@ -333,8 +333,11 @@ ptc.prototype = {
         Grid[this.x][this.y] = 0;
     },
     wind: function(dx, dy) {
-        dx = Math.round((.7 * dx) + Math.random() * this.D * PortField.getXVelocity(this.x, this.y));
-        dy = Math.round((.7 * dy) + Math.random() * this.D * PortField.getYVelocity(this.x, this.y));
+        var d = this.D
+        if (this.type === Type.Dirt)
+            d /= (.1 + this.moisture)
+        dx = Math.round((.7 * dx) + Math.random() * d * PortField.getXVelocity(this.x, this.y));
+        dy = Math.round((.7 * dy) + Math.random() * d * PortField.getYVelocity(this.x, this.y));
         // if (dx != 0) dx = (dx / Math.abs(dx)) | 0;
         // if (dy != 0) dy = (dy / Math.abs(dy)) | 0;
         return ([dx, dy]);
@@ -371,7 +374,7 @@ ptc.prototype = {
             case Type.Water: //d
                 tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
                 accel = this.wind(tdx, 1);
-                this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 40) + 30));
+                this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 20) + 30));
                 break;
             case Type.Powder: //d
                 accel = this.wind(0, 1);
