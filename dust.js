@@ -169,7 +169,7 @@ function inBounds(loc) {
 }
 
 function KeyEvent(keyCode) {
-  console.log(keyCode)
+    // console.log(keyCode)
     switch (keyCode) {
         case 81: //q
             Selection = Type.Dust;
@@ -207,10 +207,9 @@ function KeyEvent(keyCode) {
         case 83: //s
             Selection = Type.Seed;
             break;
-        case 87: //w
+        case 67: //c
             Selection = Type.Lava;
             break;
-
         case 49: //1
             if (cursorSize > 1)
                 cursorSize--
@@ -246,7 +245,7 @@ function ptc(x, y, type) {
     this.sinks = false;
 
     switch (type) {
-        case Type.Dust: //d
+        case Type.Dust:
             this.hue = color += .2;
             h = this.hue
             s = 360;
@@ -255,21 +254,21 @@ function ptc(x, y, type) {
             this.flamable = 1;
             this.sinks = true;
             break;
-        case Type.Dirt: //d
+        case Type.Dirt:
             h = 35;
             s = 150;
             l = 46;
             d = 10;
             this.sinks = true;
             break;
-        case Type.Seed: //d
+        case Type.Seed:
             h = 150;
             s = 130;
             l = 60;
             d = 20;
             this.flamable = 2;
             break;
-        case Type.Plant: //d
+        case Type.Plant:
             h = 150;
             s = 100;
             l = 30;
@@ -277,39 +276,45 @@ function ptc(x, y, type) {
             this.life = 15;
             this.flamable = 1;
             break;
-        case Type.Water: //d
+        case Type.Water:
             h = 205;
             s = 360;
             l = 100;
             d = 20;
             this.moisture = 1
             break;
-            f
-        case Type.Brick: //d
+        case Type.Lava:
+            h = 10;
+            s = 360;
+            l = 30;
+            d = 10;
+            this.life = 50;
+            break;
+        case Type.Brick:
             h = 12;
             s = 77;
             l = 30;
             d = 0;
             break;
-        case Type.Tap: //d
+        case Type.Tap:
             h = 12;
             s = 60;
             l = 99;
             d = 0;
-        case Type.Fire: //d
+        case Type.Fire:
             h = 10;
             s = 360;
             l = 99;
             d = 40;
             this.life = (Math.random() * 50) | 0;
             break;
-        case Type.Glitch: //d
+        case Type.Glitch:
             h = Math.random() * 360 | 0;
             s = 100;
             l = 30 + Math.random() * 30 | 0;
             d = 0;
             break;
-        case Type.Powder: //d
+        case Type.Powder:
             h = 50;
             s = 10;
             l = 20;
@@ -318,7 +323,7 @@ function ptc(x, y, type) {
             this.life = 1;
             this.flamable = 8;
             break;
-        case Type.Nitro: //d
+        case Type.Nitro:
             h = 130;
             s = 100;
             l = 50;
@@ -350,60 +355,70 @@ ptc.prototype = {
     tick: function(dir) {
         var accel = [0, 0];
         switch (this.type) {
-            case Type.Dust: //d
+            case Type.Dust:
                 accel = this.wind(0, 1);
                 this.hue += 1
                 this.color = husl.p.toRGB(this.hue, 360, 50);
                 break;
-            case Type.Dirt: //d
+            case Type.Dirt:
                 // console.log(this.moisture)
-                // this.moisture *= .9995 //drying up
+                // this.moisture *= .9995 rying up
                 this.color = husl.p.toRGB(35, 150, 45 - Math.round(20 * this.moisture));
                 accel = this.wind(0, 1);
                 break;
-            case Type.Seed: //d
+            case Type.Seed:
                 accel = this.wind(0, 1);
                 if (Grid[this.x][this.y + 1] && Grid[this.x][this.y + 1].type == Type.Dirt && Grid[this.x][this.y + 1].moisture > .5) {
-                    var x = this.x
-                    var y = this.y
-                    this.remove()
-                    Grid[x][y] = new ptc(x, y, Type.Plant)
-                        // Grid[x][y - 1] = new ptc(x, y, Type.Plant)
+                    this.Transform(Type.Plant)
                     return
                 }
+
                 break;
-            case Type.Plant: //d
+            case Type.Plant:
                 this.Grow();
                 return;
                 break;
-            case Type.Water: //d
-                tdx = Mathf.loor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
+            case Type.Water:
+                tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
                 accel = this.wind(tdx, 1);
                 this.color = husl.p.toRGB(205, 360, Math.floor((Math.random() * 20) + 30));
                 break;
-            case Type.Powder: //d
+            case Type.Lava:
+                tdx = Math.round(-.6 + Math.random() * 1.2); //(Math.random() > .5 ? -1 : 1);
+                accel = this.wind(tdx, 1);
+                this.color = husl.p.toRGB((Math.random() * 30) + 4 | 0, 340, Math.floor((Math.random() * 15) + this.life));
+                this.Burn(.2);
+                this.life *= .9995
+                if (this.life < 0.1) {
+                    this.Transform(Type.Brick)
+                    return
+                }
+
+
+                break;
+            case Type.Powder:
                 accel = this.wind(0, 1);
                 break;
-            case Type.Nitro: //d
+            case Type.Nitro:
                 tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
                 accel = this.wind(tdx, 1);
                 break;
-            case Type.Brick: //d
+            case Type.Brick:
                 return;
                 break;
-            case Type.Tap: //d
+            case Type.Tap:
                 this.Tap();
                 return;
                 break;
-            case Type.Glitch: //d
+            case Type.Glitch:
                 this.Glitch();
                 return;
                 break;
-            case Type.Fire: //d
+            case Type.Fire:
                 tdx = Math.floor(-1 + Math.random() * 3); //(Math.random() > .5 ? -1 : 1);
                 accel = this.wind(0, 0);
                 this.color = husl.p.toRGB(Math.floor(Math.random() * 20) + 10, 360, Math.floor((Math.random() * 40) + 40));
-                this.Burn();
+                this.Burn(1);
                 this.life -= 1;
                 if (this.life < 0) {
                     this.remove();
@@ -475,24 +490,35 @@ ptc.prototype = {
                 return true
             })
         }
-
+        if (this.type === Type.Lava) {
+            _.each(this.ReturnAdjacent({
+                x: this.x,
+                y: this.y
+            }), (point) => {
+                if (point.type === Type.Lava && point.life < this.life) {
+                    var halfdiff = (this.life - point.life) / 2
+                    point.life += halfdiff
+                    this.life -= halfdiff
+                        // return false
+                }
+                return true
+            })
+        }
         if (this.sinks && (this.y + dy < 100) && (this.y + dy > 0) && Grid[this.x][this.y + dy].type === Type.Water) {
-            temp = Grid[this.x][this.y + dy];
-            Grid[this.x][this.y + dy] = this;
-            Grid[this.x][this.y] = temp;
-            temp.y -= dy;
-            this.y += dy;
+            this.Swap(dx, dy)
         }
         if (this.type === Type.Water && (this.y + dy < 100) && (this.y + dy > 0) && Grid[this.x][this.y + dy].type === Type.Nitro) {
-            temp = Grid[this.x][this.y + dy];
-            Grid[this.x][this.y + dy] = this;
-            Grid[this.x][this.y] = temp;
-            temp.y -= dy;
-            this.y += dy;
+            this.Swap(dx, dy)
         }
         return;
     },
-
+    Swap: function(dx, dy) {
+        temp = Grid[this.x][this.y + dy];
+        Grid[this.x][this.y + dy] = this;
+        Grid[this.x][this.y] = temp;
+        temp.y -= dy;
+        this.y += dy;
+    },
     Move: function(dx, dy) {
         if ((this.x + dx) < 0 || ((this.x + dx) > 99)) {
             this.remove();
@@ -507,26 +533,7 @@ ptc.prototype = {
         }
         return (0);
     },
-    Burn: function() {
-        for (var i = 0; i < 4; i++) {
-            if (0 > this.x + Adjacent[i][0] || this.x + Adjacent[i][0] > 99 || 0 > this.y + Adjacent[i][1] || this.y + Adjacent[i][1] > 99) continue;
-            adj = Grid[this.x + Adjacent[i][0]][this.y + Adjacent[i][1]];
-            if (adj != 0 && adj.flamable > 0) adj.life -= 3;
-            if (adj.life < 0) {
-                PortField.setVelocity(adj.x, adj.y, (Math.random() - .5) * 5 * adj.flamable, (Math.random() - .5) * 5 * adj.flamable);
-                if (adj.type === Type.Nitro) {
-                    adj.type = Type.Fire;
-                    adj.Burn();
-                }
-                adj.type = Type.Fire;
-                adj.life = 40;
-                // adj.Burn();
-            }
-            if (adj != 0 && adj.type === Type.Water) this.life -= 10;
-        }
-        PortField.setDensity(this.x, this.y, 60);
-        PortField.setVelocity(this.x, this.y, 0, -.2);
-    },
+
     ReturnAdjacent: function(point) {
         var AdjSet = []
         for (var dx = -1; dx <= 1; dx++) {
@@ -542,6 +549,36 @@ ptc.prototype = {
             }
         }
         return AdjSet
+    },
+    Transform: function(type) {
+        var x = this.x
+        var y = this.y
+        this.remove()
+        Grid[x][y] = new ptc(x, y, type)
+    },
+    Burn: function(str) {
+        for (var i = 0; i < 4; i++) {
+            if (0 > this.x + Adjacent[i][0] || this.x + Adjacent[i][0] > 99 || 0 > this.y + Adjacent[i][1] || this.y + Adjacent[i][1] > 99) continue;
+            adj = Grid[this.x + Adjacent[i][0]][this.y + Adjacent[i][1]];
+            if (adj != 0 && adj.flamable > 0) adj.life -= 3;
+            if (adj.life < 0) {
+                PortField.setVelocity(adj.x, adj.y, (Math.random() - .5) * 5 * adj.flamable, (Math.random() - .5) * 5 * adj.flamable);
+                if (adj.type === Type.Nitro) {
+                    adj.type = Type.Fire;
+                    adj.Burn(2);
+                }
+                adj.type = Type.Fire;
+                adj.life = 40;
+                // adj.Burn();
+            }
+            if (adj != 0 && adj.type === Type.Water) {
+                this.life -= 5;
+                if (this.type === Type.Lava)
+                    adj.remove()
+            }
+        }
+        PortField.setDensity(this.x, this.y, str * 60);
+        PortField.setVelocity(this.x, this.y, 0, str * -.2);
     },
     Grow: function() {
         if ((Math.random() < .01) && this.y > 1 && Grid[this.x][this.y - 1] === 0) new ptc(this.x, this.y - 1, Type.Plant);
